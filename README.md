@@ -87,6 +87,8 @@ http://localhost:3000
 - **Routing Engine:** C++14 (nlohmann/json for parsing)
 - **Data:** GeoJSON
 
+
+## AI SUPPORT IS REMOVED AS OF NOW
 ## 📄 License
 
 This project is licensed under the MIT License.
