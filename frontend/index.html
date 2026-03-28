@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DTU Campus Navigator</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     crossorigin=""/>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Favicon (optional) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1>🗺️ DTU Campus Navigator</h1>
+          <p>Find the optimal route across Delhi Technological University</p>
+        </div>
+        <div class="header-right">
+          <div class="stat-card">
+            <span class="stat-label">Locations</span>
+            <span class="stat-value" id="location-count">0</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Sidebar Controls -->
+      <aside class="sidebar">
+        <div class="sidebar-scroll">
+          <!-- Route Configuration -->
+          <section class="control-section">
+            <h2>📍 Route Configuration</h2>
+            <div class="form-group">
+              <label for="start-location">
+                <span class="label-icon">🟢</span> Start Location
+              </label>
+              <select id="start-location" class="form-control">
+                <option value="">-- Select Start --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="end-location">
+                <span class="label-icon">🔴</span> End Location
+              </label>
+              <select id="end-location" class="form-control">
+                <option value="">-- Select End --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="algorithm-select">
+                <span class="label-icon">⚙️</span> Algorithm
+              </label>
+              <select id="algorithm-select" class="form-control">
+                <option value="dijkstra">Dijkstra (Shortest Path)</option>
+                <option value="bfs">BFS (Breadth-First)</option>
+                <option value="dfs">DFS (Depth-First)</option>
+                <option value="multistop">Multi-Stop Route</option>
+              </select>
+              <small class="form-hint" id="algo-hint">Finds the shortest path between two points</small>
+            </div>
+            <!-- Multi-Stop Section -->
+            <div id="multistop-section" class="form-group" style="display: none;">
+              <label>
+                <span class="label-icon">📌</span> Intermediate Stops
+              </label>
+              <div id="stops-container" class="stops-list"></div>
+              <button id="add-stop-btn" class="btn btn-sm btn-outline">
+                <span>+</span> Add Stop
+              </button>
+            </div>
+            <!-- Action Buttons -->
+            <div class="button-group">
+              <button id="find-route-btn" class="btn btn-primary">
+                <span class="btn-icon">🔍</span> Find Route
+              </button>
+              <button id="clear-route-btn" class="btn btn-secondary">
+                <span class="btn-icon">🗑️</span> Clear Route
+              </button>
+            </div>
+          </section>
+
+
+          <!-- Results Panel -->
+          <section id="results-section" class="control-section results-panel" style="display: none;">
+            <h2>📊 Route Details</h2>
+            <div class="result-grid">
+              <div class="result-item">
+                <span class="result-label">Algorithm</span>
+                <span id="result-algorithm" class="result-value">-</span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">Distance</span>
+                <span id="result-distance" class="result-value">- m</span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">Nodes Visited</span>
+                <span id="result-nodes" class="result-value">-</span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">Compute Time</span>
+                <span id="result-time" class="result-value">- ms</span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">Est. Time / Calories</span>
+                <span id="result-eta" class="result-value">-</span>
+              </div>
+            </div>
+            <div class="result-path">
+              <span class="result-label">Path</span>
+              <div id="result-path-list" class="path-list"></div>
+            </div>
+          </section>
+
+
+          <!-- Route Instructions Panel -->
+          <section id="route-instructions-section" class="control-section" style="display: none;">
+            <h2>🧭 Route Instructions</h2>
+            <div id="instructions-list" class="instructions-list"></div>
+          </section>
+
+
+          <!-- Export / Share Buttons -->
+          <div class="button-group">
+            <button id="share-route-btn" class="btn btn-outline">🔗 Share Route Link</button>
+            <span id="share-link" style="word-break:break-all;"></span>
+          </div>
+        </div>
+      </aside>
+
+
+      <!-- Map Container -->
+      <main class="map-wrapper">
+        <div id="map" class="map-container"></div>
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+          <div class="spinner-container">
+            <div class="spinner"></div>
+            <p class="loading-text">Computing route...</p>
+          </div>
+        </div>
+        <!-- Map Controls -->
+        <div class="map-controls">
+          <button id="reset-view-btn" class="map-btn" title="Reset map view">
+            <span>🔄</span>
+          </button>
+        </div>
+      </main>
+    </div>
+  </div>
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+
+  <!-- Leaflet JS and Feature Libraries -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.polyline.snakeanim/L.Polyline.SnakeAnim.js"></script>
+
+
+  <!-- Custom JS -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/map.js"></script>
+</body>
+</html>
